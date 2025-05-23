@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather Forecast</title>
+    <style>
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(-45deg, #6a11cb, #2575fc, #37ecba, #f6d365);
+            background-size: 400% 400%;
+            animation: gradientBG 12s ease infinite;
+            min-height: 100vh;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        h1 {
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .weather-container {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px) saturate(180%);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeInUp 1s ease forwards;
+        }
+
+        input[type="text"], button {
+            width: 100%;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            color: white;
+        }
+
+        input[type="text"] {
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        }
+
+        input[type="text"]:focus {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 25px rgba(78, 205, 196, 0.3);
+            outline: none;
+        }
+
+        button {
+            background: linear-gradient(45deg, #4ecdc4, #45b7d1);
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(78, 205, 196, 0.4);
+        }
+
+        .loader {
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #4ecdc4;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: 20px auto;
+        }
+
+        #weather-info {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.5s ease;
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        #weather-info.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .weather-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .weather-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .weather-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Weather Forecast</h1>
+    <div class="weather-container">
+        <input type="text" id="city" placeholder="Enter city name...">
+        <button onclick="getWeather()">Get Forecast</button>
+        <div class="loader" id="loader"></div>
+        <div id="weather-info"></div>
+    </div>
+
+    <script>
+        async function getWeather() {
+            const city = document.getElementById("city").value.trim();
+            const weatherInfo = document.getElementById("weather-info");
+            const loader = document.getElementById("loader");
+
+            if (!city) {
+                alert("Please enter a city name.");
+                return;
+            }
+
+            loader.style.display = "block";
+            weatherInfo.classList.remove("show");
+            weatherInfo.innerHTML = "";
+
+            try {
+                const apiKey = "9d42cb9a61d8b2dfb76f18b73b7634df"; // Replace with your OpenWeatherMap API key
+                const url = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&cnt=5&appid=${apiKey}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.cod !== "200") {
+                    throw new Error(data.message);
+                }
+
+                let currentHtml = `<h2>${data.city.name}, ${data.city.country}</h2>`;
+                currentHtml += `<div class="weather-cards">`;
+
+                data.list.forEach(item => {
+                    currentHtml += `
+                        <div class="weather-card">
+                            <p><strong>${new Date(item.dt_txt).toLocaleString()}</strong></p>
+                            <p>${item.weather[0].description}</p>
+                            <p>🌡️ ${item.main.temp}°C</p>
+                            <p>💧 ${item.main.humidity}%</p>
+                            <p>🌬️ ${item.wind.speed} m/s</p>
+                        </div>`;
+                });
+
+                currentHtml += `</div>`;
+                weatherInfo.innerHTML = currentHtml;
+                setTimeout(() => weatherInfo.classList.add('show'), 100);
+            } catch (error) {
+                weatherInfo.innerHTML = `<p>Error: ${error.message}</p>`;
+            } finally {
+                loader.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>
